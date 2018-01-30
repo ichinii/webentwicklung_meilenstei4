@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="UTF-8"> 
+
+		<script type="text/javascript" src="jquery.js"></script>
+		<script type="text/javascript">
+			loggedIn = false
+
+			function login() {
+				$.ajax(
+					"http://192.168.178.69:8080/swxercise/rest/v1/user/login",
+					{
+						type: 'POST',
+						data: JSON.stringify({
+							username: "admin",
+							password: "admin"
+						}),
+						processData: false,
+						contentType: 'application/json',
+						success: function(data, textStatus) {
+							if (data
+									&& data.responseText
+									&& data.responseText === "Success") {
+								console.log("logged in", data)
+								loggedIn = true
+								initBody()
+							} else {
+								alert("failed to login")
+							}
+						}
+					}
+				)
+					.fail(function(data) { console.log("login failed", data) })
+			}
+
+			function logout() {
+				$.ajax(
+					"http://192.168.178.69:8080/swxercise/rest/v1/user/logout",
+					{
+						type: 'POST',
+						success: function(data, textStatus) {
+							if (data && data.responseText && data.responseText === "Success") {
+								console.log("logged out")
+								loggedIn = false
+								initBody()
+							} else {
+								alert("failed to logout")
+							}
+						}
+					}
+				)
+					.fail(function(data) { console.log("logout failed", data) })
+			}
+
+			function initBody() {
+				$("body").empty()
+
+				//if (!loggedIn) {
+					$("<input>")
+						.attr("type", "button")
+						.attr("value", "login")
+						.click(function() {
+							login()
+						})
+						.appendTo("body");
+				//} else {
+					$("<input>")
+						.attr("type", "button")
+						.attr("value", "logout")
+						.click(function() {
+							logout()
+						})
+						.appendTo("body");
+				//}
+			}
+
+			$("body").ready(function() {
+				initBody()
+			})
+		</script>
+
+		<title>Meilenstein 4</title>
+	</head>
+	<body>
+	</body>
+</html>
