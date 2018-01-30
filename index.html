@@ -9,7 +9,7 @@
 
 			function login() {
 				$.ajax(
-					"http://192.168.178.69:8080/swxercise/rest/v1/user/login",
+					"localhost:8080/swxercise/rest/v1/user/login",
 					{
 						type: 'POST',
 						data: JSON.stringify({
@@ -36,7 +36,7 @@
 
 			function logout() {
 				$.ajax(
-					"http://192.168.178.69:8080/swxercise/rest/v1/user/logout",
+					"localhost:8080/swxercise/rest/v1/user/logout",
 					{
 						type: 'POST',
 						data: JSON.stringify({
