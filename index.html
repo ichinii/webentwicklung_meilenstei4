@@ -3,88 +3,191 @@
 	<head>
 		<meta charset="UTF-8"> 
 
+		<style>
+		</style>
+
 		<script type="text/javascript" src="jquery.js"></script>
 		<script type="text/javascript">
-			loggedIn = false
-
-			function login() {
+			function login(username, password) {
+				console.log(username, password)
 				$.ajax(
 					"http://localhost:8080/swxercise/rest/v1/user/login",
 					{
 						type: 'POST',
 						data: JSON.stringify({
-							username: "admin",
-							password: "admin"
+							username: username,
+							password: password
 						}),
 						processData: false,
 						contentType: 'application/json',
 						success: function(data, textStatus) {
-							if (data
-									&& data.responseText
-									&& data.responseText === "Success") {
-								console.log("logged in", data)
+							console.log("logged in", data)
+							if (data.responseText === "Success") {
 								loggedIn = true
-								initBody()
+								resetBody()
 							} else {
-								console.log("received unknown message from server while login")
+								resetBody()
+								alert("failed to login (wrong username/password or already logged in)")
 							}
 						}
 					}
 				)
-					.fail(function(data) { console.log("login failed", data) })
+					.fail(function(data) {
+						console.log("login failed", data)
+						alert("failed to login (wrong username/password or already logged in)")
+						logout()
+					})
 			}
 
 			function logout() {
 				$.ajax(
-					"localhost:8080/swxercise/rest/v1/user/logout",
+					"http://localhost:8080/swxercise/rest/v1/user/logout",
 					{
 						type: 'POST',
-						data: JSON.stringify({
-							username: "admin",
-							password: "admin"
-						}),
-						processData: false,
-						contentType: 'application/json',
 						success: function(data, textStatus) {
-							if (data
-									&& data.responseText
-									&& data.responseText === "Success") {
-								console.log("logged out")
-								loggedIn = false
-								initBody()
-							} else {
-								console.log("received unknown message from server while logout")
-							}
+							console.log("logged out", data)
+							reset()
+							resetBody()
 						}
 					}
 				)
-					.fail(function(data) { console.log("logout failed", data) })
+					.fail(function(data) {
+						console.log("logout failed", data)
+					})
 			}
 
-			function initBody() {
-				$("body").empty()
+			function fetchProfile() {
+				$.ajax(
+					"http://localhost:8080/swxercise/rest/v1/user",
+					{
+						type: 'GET',
+						success: function(data, textStatus) {
+							console.log("fetch profile", data)
+							profile = {
+								firstname: data.firstname,
+								lastname: data.lastname,
+								username: data.profile.username
+							}
+							resetBody()
+						}
+					}
+				)
+					.fail(function(data) {
+						console.log("fetch profile failed", data)
+					})
+			}
 
-				//if (!loggedIn) {
+			function fetchUsers() {
+				$.ajax(
+					"http://localhost:8080/swxercise/rest/v1/users",
+					{
+						type: 'GET',
+						success: function(data, textStatus) {
+							console.log("fetch users", data)
+							users = []
+							for (var i = 0; i < data.length; i++) {
+								users[i] = {
+									firstname: data[i].firstname,
+									lastname: data[i].lastname,
+									username: data[i].profile.username
+								}
+							}
+							resetBody()
+						}
+					}
+				)
+					.fail(function(data) {
+						console.log("fetch profile failed", data)
+					})
+			}
+
+			function appendUserAsListTo($parent, user) {
+				$parent
+					.append($("<li>").text("firstname: " + user.firstname))
+					.append($("<li>").text("lastname: " + user.lastname))
+			}
+
+			function appendLoggedOutTo($parent) {
+				$("<input>")
+					.attr("id", "username")
+					.attr("type", "text")
+					.attr("name", "username")
+					.appendTo($parent)
+				$("<input>")
+					.attr("id", "password")
+					.attr("type", "password")
+					.attr("name", "password")
+					.appendTo($parent)
+
+				$("<input>")
+					.attr("type", "button")
+					.attr("value", "login")
+					.click(function() {
+						login($("#username").val(), $("#password").val())
+					})
+					.appendTo($parent)
+			}
+
+			function appendLoggedInTo($parent) {
+				$("<input>")
+					.attr("type", "button")
+					.attr("value", "logout")
+					.click(function() {
+						logout()
+					})
+					.appendTo($parent)
+
+				if (profile) {
+					appendUserAsListTo(
+						$("<ul>")
+							.append($("<b>").text(profile.username))
+							.appendTo($parent),
+						profile)
+				} else {
 					$("<input>")
 						.attr("type", "button")
-						.attr("value", "login")
+						.attr("value", "profile")
 						.click(function() {
-							login()
+							fetchProfile()
 						})
-						.appendTo("body");
-				//} else {
+						.appendTo($parent)
+				}
+
+				if (users) {
+					var $ul = $("<ul>")
+						.append("<b>").text("userlist")
+						.appendTo($parent)
+					for (var i = 0; i < users.length; i++)
+						appendUserAsListTo(
+							$("<ul>").appendTo(
+								$("<li>")
+									.append($("<b>").text(users[i].username))
+									.appendTo($ul)),
+							users[i])
+				} else {
 					$("<input>")
 						.attr("type", "button")
-						.attr("value", "logout")
+						.attr("value", "users")
 						.click(function() {
-							logout()
+							fetchUsers()
 						})
-						.appendTo("body");
-				//}
+						.appendTo($parent)
+				}
+			}
+
+			function resetBody() {
+				(loggedIn ? appendLoggedInTo : appendLoggedOutTo)($("body").empty())
+			}
+
+			function reset() {
+				loggedIn = false
+				profile = undefined
+				users = undefined
 			}
 
 			$("body").ready(function() {
-				initBody()
+				reset()
+				resetBody()
 			})
 		</script>
 
